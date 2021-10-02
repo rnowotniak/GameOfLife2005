@@ -1,0 +1,16 @@
+incs= \
+	-I"c:/ROB/DEV-CPP/include/c++" \
+	-I"c:/ROB/DEV-CPP/include/c++/mingw32" \
+	-I"c:/ROB/DEV-CPP/include/c++/backward" \
+	-I"c:/ROB/DEV-CPP/include/include"
+CXXFLAGS=$(incs) -DHAVE_FLTK -DWIN32 -I../.. -I../../fltk -I../../Funkcje_Przejscia -march=i686 -mcpu=i686 -O3 -ffast-math -fexpensive-optimizations
+
+all: jadro.dll mielina.dll neuron.dll otoczenie.dll
+
+%.dll: %.o
+	g++ $(CXXFLAGS) -shared -fPIC $^ -o $@
+	strip $@
+
+clean:
+	-rm *.dll *.o
+

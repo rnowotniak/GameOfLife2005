@@ -1,0 +1,50 @@
+# Project: life
+# Makefile created by Dev-C++ 4.9.8.0
+
+CPP  = g++.exe
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = life_private.res
+OBJ  = sasiedztwo.o ekosystem.o fabryka.o fllife.o komorka.o fltk/gui.o fltk/widok.o $(RES)
+LINKOBJ  = sasiedztwo.o ekosystem.o fabryka.o fllife.o komorka.o fltk/gui.o fltk/widok.o $(RES)
+LIBS =  -L"C:/ROB/DEV-CPP/lib" -mwindows -lfltk -lole32 -luuid -lcomctl32 -lwsock32 -lm 
+INCS =  -I"C:/ROB/DEV-CPP/include"  -I"C:/WINDOWS/Pulpit/tmp/life/fltk"  -I"C:/WINDOWS/Pulpit/tmp/life" 
+CXXINCS =  -I"C:/ROB/DEV-CPP/include/c++"  -I"C:/ROB/DEV-CPP/include/c++/mingw32"  -I"C:/ROB/DEV-CPP/include/c++/backward"  -I"C:/ROB/DEV-CPP/include"  -I"C:/WINDOWS/Pulpit/tmp/life/fltk"  -I"C:/WINDOWS/Pulpit/tmp/life" 
+BIN  = life.exe
+CXXFLAGS = $(CXXINCS)-march=i686 -mcpu=i686 -ffast-math   -fexpensive-optimizations -O3
+CFLAGS = $(INCS)-DWIN32 -mms-bitfields   -fexpensive-optimizations -O3
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before life.exe all-after
+
+
+clean: clean-custom
+	rm -f $(OBJ) $(BIN)
+
+$(BIN): $(LINKOBJ)
+	$(CPP) $(LINKOBJ) -o "life.exe" $(LIBS)
+
+sasiedztwo.o: sasiedztwo.cpp
+	$(CPP) -c sasiedztwo.cpp -o sasiedztwo.o $(CXXFLAGS)
+
+ekosystem.o: ekosystem.cpp
+	$(CPP) -c ekosystem.cpp -o ekosystem.o $(CXXFLAGS)
+
+fabryka.o: fabryka.cpp
+	$(CPP) -c fabryka.cpp -o fabryka.o $(CXXFLAGS)
+
+fllife.o: fllife.cpp
+	$(CPP) -c fllife.cpp -o fllife.o $(CXXFLAGS)
+
+komorka.o: komorka.cpp
+	$(CPP) -c komorka.cpp -o komorka.o $(CXXFLAGS)
+
+fltk/gui.o: fltk/gui.cxx
+	$(CPP) -c fltk/gui.cxx -o fltk/gui.o $(CXXFLAGS)
+
+fltk/widok.o: fltk/widok.cpp
+	$(CPP) -c fltk/widok.cpp -o fltk/widok.o $(CXXFLAGS)
+
+life_private.res: life_private.rc 
+	$(WINDRES) -i life_private.rc -I rc -o life_private.res -O coff 

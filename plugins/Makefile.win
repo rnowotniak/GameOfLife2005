@@ -1,0 +1,31 @@
+incs= \
+	-I"c:/ROB/DEV-CPP/include/c++" \
+	-I"c:/ROB/DEV-CPP/include/c++/mingw32" \
+	-I"c:/ROB/DEV-CPP/include/c++/backward" \
+	-I"c:/ROB/DEV-CPP/include/include"
+CXXFLAGS=$(incs) -DHAVE_FLTK -DWIN32 -I.. -I../fltk -march=i686 -mcpu=i686 -O3 -ffast-math -fexpensive-optimizations
+
+all: \
+	1d-150.dll \
+	amazing.dll \
+	artist.dll \
+	brians_brain.dll \
+	3stany.dll \
+	amoeba.dll \
+	conway.dll \
+	coral.dll \
+	highlife.dll \
+	maze_race.so \
+	replicator.dll \
+	seeds.dll \
+	sierpinski.dll \
+	walled_cities.dll \
+	wire_world.so
+
+%.dll: %.o
+	g++ $(CXXFLAGS) -shared -fPIC $^ -o $@
+	strip $@
+
+clean:
+	-rm *.dll *.o
+

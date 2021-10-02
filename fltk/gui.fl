@@ -1,0 +1,1111 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0105 
+header_name {.h} 
+code_name {.cxx}
+decl {\#include <cstdlib>} {public
+} 
+
+decl {\#include <cstdio>} {public
+} 
+
+decl {\#include <cstring>} {public
+} 
+
+decl {\#include <list>} {public
+} 
+
+declblock {\#ifdef WIN32} {open after {\#endif}
+} {
+  decl {\#include <windows.h>} {}
+} 
+
+decl {\#include <FL/fl_ask.H>} {public
+} 
+
+decl {\#include <FL/Fl_Color_Chooser.H>} {public
+} 
+
+decl {\#include <FL/Fl_File_Chooser.H>} {public
+} 
+
+decl {\#include "life.h"} {public
+} 
+
+decl {\#include "ekosystem.h"} {public
+} 
+
+decl {\#include "widok.h"} {public
+} 
+
+decl {Fl_Font PL_Font;} {public
+} 
+
+Function {timeout_callback(void *o)} {open private return_type void
+} {
+  code {Widok *w = (Widok*)o;
+Ekosystem *e = w->Podaj_Ekosystem();
+
+if(!e)
+   return;
+e->generacja();
+w->redraw();} {}
+  code {Fl::repeat_timeout(0.3, timeout_callback, o);} {}
+} 
+
+class UserInterface {open
+} {
+  decl {bool playing;} {}
+  Function {UserInterface()} {open
+  } {
+    code {playing = false;} {}
+    Fl_Window okno1 {
+      label {Projekt: Game Of Life Reactivated}
+      xywh {316 300 800 600} type Double resizable visible
+    } {
+      Fl_Menu_Bar menu_glowne {
+        label {Wczytaj Uklad}
+        xywh {8 5 575 25}
+      } {
+        submenu {} {
+          label Plik open
+          xywh {0 0 100 20}
+        } {
+          menuitem {} {
+            label {Nowy ekosystem}
+            callback {int sz, wys;
+
+const char *p;
+
+do
+ sz = (p = fl_input("Szerokosc Ekosystemu:", "50"))?atoi(p):0;
+while (sz <= 3 || sz > 400);
+
+do
+ wys = (p = fl_input("Wysokosc Ekosystemu:", "50"))?atoi(p):0;
+while (wys <= 3 || wys > 400);
+
+Ekosystem *e = Widok1->Podaj_Ekosystem();
+Widok1->Pokazuj_Ekosystem(0);
+if (e)
+ delete e;
+
+Widok1->Pokazuj_Ekosystem(new Ekosystem(sz, wys));
+Uaktualnij_Liste_Wyboru();
+Widok1->redraw();}
+            xywh {0 0 100 20}
+          }
+          menuitem {} {
+            label {Zapisz ekosystem}
+            callback {const Ekosystem *e = Widok1->Podaj_Ekosystem();
+if (!e)
+ return;
+
+Fl_File_Chooser fc(KATALOG_EKOSYSTEMOW,
+   "Pliki z ekosystemem (*.eko)",
+   Fl_File_Chooser::CREATE,
+   "Wybierz plik do zapisu ekosystemu");
+fc.show();
+
+while (fc.visible())
+ Fl::wait();
+
+if (fc.count() == 1) {
+  FILE *Plik = fopen(fc.value(), "wb");
+  e->Zapisz(Plik);
+  fclose(Plik);
+}}
+            xywh {0 0 100 20}
+          }
+          menuitem {} {
+            label {Wczytaj ekosystem}
+            callback {Fl_File_Chooser fc(KATALOG_EKOSYSTEMOW,
+   "Pliki z ekosystemem (*.eko)",
+   Fl_File_Chooser::SINGLE,
+   "Wybierz plik ekosystemu");
+fc.show();
+
+while (fc.visible())
+ Fl::wait();
+
+if (fc.count() == 1) {
+
+ Ekosystem *e = Widok1->Podaj_Ekosystem();
+ Widok1->Pokazuj_Ekosystem(0);
+ if (e)
+  delete e;
+ e = new Ekosystem(50, 50);
+ Widok1->Pokazuj_Ekosystem(e);
+
+ FILE *Plik = fopen(fc.value(), "rb");
+ e->Wczytaj(Plik);
+ fclose(Plik);
+Uaktualnij_Liste_Wyboru();
+ Widok1->przywroc();
+ Widok1->redraw();
+}}
+            xywh {10 10 100 20}
+          }
+          menuitem zamknij {
+            label {Zamknij ekosystem}
+            callback {Ekosystem *e = Widok1->Podaj_Ekosystem();
+Widok1->Pokazuj_Ekosystem(0);
+if (e)
+  delete e;
+Widok1->redraw();}
+            xywh {10 10 100 20} divider
+          }
+          menuitem {} {
+            label Koniec
+            callback {exit(0);}
+            xywh {10 10 100 20} shortcut 0xff1b
+          }
+        }
+        submenu {} {
+          label {Uklady komórek}
+          xywh {0 0 100 20}
+        } {
+          menuitem {} {
+            label {Usmierc wszystkie komórki}
+            callback {Ekosystem *e = Widok1->Podaj_Ekosystem();
+if (!e)
+   return;
+
+e->Usmierc_Komorki();
+Widok1->redraw();}
+            xywh {10 10 100 20}
+          }
+          menuitem {} {
+            label {Przeszukaj katalog ponownie}
+            callback {Uaktualnij_Menu_Ukladow();}
+            xywh {20 20 100 20} divider
+          }
+          submenu menu_ukladow {
+            label {Katalog Ukladów}
+            xywh {0 0 100 20}
+          } {}
+          menuitem {} {
+            label {Zapisz uklad komórek}
+            callback {Ekosystem *e;
+if (!(e = Widok1->Podaj_Ekosystem())) 
+ return;
+
+Fl_File_Chooser fc(KATALOG_UKLADOW,
+   "Uklady komórek (*.lif)", 
+   Fl_File_Chooser::CREATE,
+   "Wybierz plik do zapisu ukladu");
+
+fc.show();
+
+while (fc.visible())
+Fl::wait();
+
+if (fc.count() != 1)
+ return;
+
+FILE *Plik = fopen(fc.value(), "wb");
+e->Zapisz_LIF(Plik,
+ e->podaj_tablice()->podaj_szerokosc() / 2,
+ e->podaj_tablice()->podaj_wysokosc() / 2);
+fclose(Plik);}
+            xywh {0 0 100 20}
+          }
+        }
+        submenu {} {
+          label Opcje
+          xywh {0 0 100 20}
+        } {
+          menuitem {} {
+            label {Powstawanie losowych rodzajów}
+            callback {Ekosystem *e = Widok1->Podaj_Ekosystem();
+if(!e)
+return;
+e->opcje.losowe_komorki(! (e->opcje.losowe_komorki()));}
+            xywh {0 0 100 20} type Toggle
+          }
+        }
+        submenu {} {
+          label Widok
+          xywh {0 0 100 20}
+        } {
+          menuitem menuitem_Stany {
+            label {Stany Komorek}
+            callback {Wybierz_Widok_Stany();;}
+            xywh {10 10 100 20} type Radio value 1
+          }
+          menuitem menuitem_Rodzaje {
+            label {Rodzaje Komorek}
+            callback {Wybierz_Widok_Rodzaje();}
+            xywh {20 20 100 20} type Radio
+          }
+          menuitem menuitem_Warunki {
+            label {Warunki Srodowiska}
+            callback {Wybierz_Widok_Warunki();}
+            xywh {0 0 100 20} type Radio divider
+          }
+          menuitem {} {
+            label Powieksz
+            callback {Widok1->powieksz();
+Widok1->redraw();}
+            xywh {30 30 100 20}
+          }
+          menuitem {} {
+            label Pomniejsz
+            callback {Widok1->pomniejsz();
+Widok1->redraw();}
+            xywh {40 40 100 20}
+          }
+          menuitem {} {
+            label {Przywróc}
+            callback {Widok1->przywroc();
+Widok1->redraw();}
+            xywh {50 50 100 20}
+          }
+        }
+        submenu {} {
+          label Pomoc
+          xywh {0 0 100 20}
+        } {
+          menuitem {} {
+            label {O programie}
+            callback {about->show();}
+            xywh {40 40 100 20}
+          }
+        }
+      }
+      Fl_Group {} {
+        private xywh {17 550 503 40} box THIN_DOWN_FRAME
+      } {
+        Fl_Button {} {
+          label {@<-}
+          callback {Widok1->przesun_w_lewo();
+Widok1->redraw();}
+          xywh {181 552 80 35} shortcut 0x68
+        }
+        Fl_Button {} {
+          label {@->}
+          callback {Widok1->przesun_w_prawo();
+Widok1->redraw();}
+          xywh {263 552 80 35} shortcut 0x6c
+        }
+        Fl_Button {} {
+          label {@+}
+          callback {Widok1->powieksz();
+Widok1->redraw();}
+          xywh {446 552 35 35} shortcut 0x2b
+        }
+        Fl_Button {} {
+          label {@line}
+          callback {Widok1->pomniejsz();
+Widok1->redraw();}
+          xywh {482 552 35 35} shortcut 0x2d
+        }
+      }
+      Fl_Group {} {
+        private xywh {530 37 40 500} box THIN_DOWN_FRAME
+      } {
+        Fl_Button {} {
+          label {@8->}
+          callback {Widok1->przesun_w_gore();
+Widok1->redraw();}
+          xywh {532 211 35 80} shortcut 0x6b
+        }
+        Fl_Button {} {
+          label {@2->}
+          callback {Widok1->przesun_w_dol();
+Widok1->redraw();}
+          xywh {532 292 35 80} shortcut 0x6a
+        }
+      }
+      Fl_Group panel {
+        label {Panel Sterowania}
+        private xywh {592 37 198 553} box THIN_DOWN_FRAME labelfont 1
+        code0 {o->resizable(0);}
+      } {
+        Fl_Group {} {
+          label {Widoki Ekosystemu:} open
+          private xywh {600 72 182 88} box BORDER_BOX
+        } {
+          Fl_Round_Button panel_Stany {
+            label {Stany Komórek}
+            callback {Wybierz_Widok_Stany();}
+            xywh {609 77 163 25} type Radio down_box ROUND_DOWN_BOX value 1
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Round_Button panel_Rodzaje {
+            label {Rodzaje Komórek}
+            callback {Wybierz_Widok_Rodzaje();}
+            xywh {609 104 163 25} type Radio down_box ROUND_DOWN_BOX
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Round_Button panel_Warunki {
+            label {Warunski ¦rodowiska}
+            callback {Wybierz_Widok_Warunki();}
+            xywh {609 130 163 25} type Radio down_box ROUND_DOWN_BOX
+            code0 {o->labelfont(PL_Font);}
+          }
+        }
+        Fl_Group {} {
+          label {Modyfikacja Pól} open
+          private xywh {600 191 182 119} box BORDER_BOX
+        } {
+          Fl_Choice lista_wyboru {
+            label {Aktualny element:} open
+            xywh {607 208 167 22} down_box BORDER_BOX align 5
+          } {}
+          Fl_Button {} {
+            label {@-9square}
+            callback {Widok1->Ustaw_Promien_Modyfikacji(0);}
+            xywh {608 255 50 50}
+          }
+          Fl_Button {} {
+            label {@+1square}
+            callback {Widok1->Ustaw_Promien_Modyfikacji(1);}
+            xywh {666 255 50 50}
+          }
+          Fl_Button {} {
+            label {@+9square}
+            callback {Widok1->Ustaw_Promien_Modyfikacji(2);}
+            xywh {724 255 50 50}
+          }
+          Fl_Box {} {
+            label {Obszar modyfikacji:}
+            xywh {607 234 169 19} align 22
+          }
+        }
+        Fl_Group {} {
+          label {Generacje komórek:} open
+          private xywh {599 329 182 63} box BORDER_BOX
+        } {
+          Fl_Button {} {
+            label {1 @+9>|}
+            callback {Ekosystem *e = Widok1->Podaj_Ekosystem();
+
+if(!e)
+   return;
+e->generacja();
+Widok1->redraw();}
+            xywh {606 335 50 50} shortcut 0x31
+          }
+          Fl_Button {} {
+            label {5 @+9>|}
+            callback {Ekosystem *e = Widok1->Podaj_Ekosystem();
+
+if(!e)
+   return;
+
+for (int n = 0; n < 5; n++)
+   e->generacja();
+
+Widok1->redraw();}
+            xywh {664 335 50 50} shortcut 0x35
+          }
+          Fl_Button {} {
+            label {10 @+9>|}
+            callback {Ekosystem *e = Widok1->Podaj_Ekosystem();
+
+if(!e)
+   return;
+
+for (int n = 0; n < 10; n++)
+   e->generacja();
+
+Widok1->redraw();}
+            xywh {722 335 50 50} shortcut 0x30
+          }
+        }
+        Fl_Group {} {
+          label {Edycja:} open
+          private xywh {600 467 182 111} box BORDER_BOX
+        } {
+          Fl_Button {} {
+            label {Stany komórek}
+            callback {lista_stanow->clear();
+
+for (int n = 0; n < Opisy_Stanow.size(); n++) {
+   if (! Opisy_Stanow[n].nazwa().empty())
+      lista_stanow->add(Opisy_Stanow[n].nazwa().c_str(), (void*)n);
+}
+
+edycja_stanow_grp->deactivate();
+okienko_stanow->show();
+
+for (int n = 0; n < okno1->children(); n++)
+   okno1->child(n)->deactivate();}
+            xywh {609 475 164 29}
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Button {} {
+            label {Rodzaje Komórek}
+            callback {lista_rodzajow->clear();
+
+Wektor_Int typy = Fabryka_Komorek::Podaj_Typy();
+
+for (int n = 0; n < typy.size(); n++) {
+   lista_rodzajow->add(Fabryka_Komorek::Podaj_Komorke(typy[n])->nazwa().c_str(),
+    (void*)typy[n]);
+}
+
+edycja_rodzaju_grp->deactivate();
+okienko_rodzajow->show();}
+            xywh {609 508 164 29}
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Button {} {
+            label {Warunki ¦rodowiska}
+            callback {Wektor_String nazwy = Fabryka_Warunkow_Srodowiska::Podaj_Nazwy();
+lista_warunkow->clear();
+
+for (int n = 0; n < nazwy.size(); n++) {
+   lista_warunkow->add(nazwy[n].c_str(), 0);
+}
+
+edycja_warunkow_grp->deactivate();
+okienko_warunkow->show();
+
+for (int n = 0; n < okno1->children(); n++)
+   okno1->child(n)->deactivate();}
+            xywh {609 541 164 29}
+            code0 {o->labelfont(PL_Font);}
+          }
+        }
+        Fl_Button play {
+          label {@+9>}
+          callback {if (!playing) {
+   Fl::add_timeout(0.2, timeout_callback, Widok1);
+   o->label("@+9||");
+} else {
+   Fl::remove_timeout(timeout_callback);
+   o->label("@+9>");
+}
+
+playing = !playing;}
+          xywh {722 400 52 50} shortcut 0x70 labelcolor 67 when 6
+        }
+      }
+      Fl_Box Widok1 {
+        user_data lista_wyboru user_data_type {Fl_Choice*}
+        xywh {20 37 500 500} box THIN_DOWN_BOX color 56 selection_color 208 labelcolor 176 resizable
+        class Widok
+      }
+    }
+    Fl_Window okienko_warunkow {
+      label {Warunki Srodowiska}
+      xywh {373 391 495 275} type Double visible
+    } {
+      Fl_Group {} {open
+        xywh {6 5 485 241} box THIN_DOWN_FRAME
+      } {
+        Fl_Browser lista_warunkow {
+          label {Lista warunkow}
+          callback {if (!o->value()) {
+   edycja_warunkow_grp->deactivate();
+   return;
+}
+
+const Warunki_Srodowiska *W =
+   Fabryka_Warunkow_Srodowiska::Nowe_Warunki(o->text(o->value()));
+
+nazwa_warunkow->value(W->nazwa.c_str());
+w_input->value(W->wilgotnosc());
+o_input->value(W->oswietlenie());
+t_input->value(W->temperatura());
+kolor_warunkow->color(W->kolor());
+kolor_warunkow->redraw();
+
+
+
+edycja_warunkow_grp->activate();}
+          xywh {12 27 181 216} type Select align 1
+        }
+        Fl_Group edycja_warunkow_grp {open
+          xywh {197 15 291 228} box THIN_DOWN_FRAME deactivate
+        } {
+          Fl_Output nazwa_warunkow {
+            label {Nazwa:}
+            xywh {219 40 246 27} color 51 labelfont 1 align 5
+          }
+          Fl_Value_Input w_input {
+            label {Wilgotno¶æ:}
+            callback {Fabryka_Warunkow_Srodowiska::Zmien_Parametry
+   (nazwa_warunkow->value(),
+     w_input->value(),
+     o_input->value(),
+     t_input->value(), kolor_warunkow->color());}
+            xywh {337 93 63 25} when 4 minimum -100 maximum 100 step 1
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Value_Input o_input {
+            label {O¶wietlenie:}
+            callback {Fabryka_Warunkow_Srodowiska::Zmien_Parametry
+   (nazwa_warunkow->value(),
+     w_input->value(),
+     o_input->value(),
+     t_input->value(), kolor_warunkow->color());} selected
+            xywh {337 127 63 25} when 4 minimum -100 maximum 100 step 1
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Value_Input t_input {
+            label {Temperatura:}
+            callback {Fabryka_Warunkow_Srodowiska::Zmien_Parametry
+   (nazwa_warunkow->value(),
+     w_input->value(),
+     o_input->value(),
+     t_input->value(), kolor_warunkow->color());}
+            xywh {337 161 63 25} when 4 minimum -100 maximum 100 step 1
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Button kolor_warunkow {
+            label {Kolor:}
+            callback {unsigned char R, G, B;
+
+Fl::get_color(o->color(), R, G, B);
+
+fl_color_chooser("Wybierz kolor:", R, G, B);
+
+o->color(fl_rgb_color(R, G, B));
+
+Fabryka_Warunkow_Srodowiska::Zmien_Parametry
+   (nazwa_warunkow->value(),
+     w_input->value(),
+     o_input->value(),
+     t_input->value(), kolor_warunkow->color());}
+            xywh {337 195 63 25} box BORDER_BOX align 4
+            code0 {o->labelfont(PL_Font);}
+          }
+        }
+      }
+      Fl_Button {} {
+        label OK
+        callback {okienko_warunkow->hide();
+
+for (int n = 0; n < okno1->children(); n++)
+   okno1->child(n)->activate();
+
+Uaktualnij_Liste_Wyboru();}
+        xywh {402 248 88 26} shortcut 0xff1b
+      }
+      Fl_Button {} {
+        label {&Dodaj}
+        callback {const char *p = fl_input("Podaj nazwe nowych warunkow srodowiska");
+
+if (!p || !strlen(p))
+   return;
+
+Fabryka_Warunkow_Srodowiska::Nowe_Warunki(p);
+
+lista_warunkow->add(p);}
+        xywh {8 248 88 26} shortcut 0x64
+      }
+      Fl_Button {} {
+        label {&Usun}
+        callback {int n;
+
+
+if (! (n= lista_warunkow->value()))
+   return;
+
+Fabryka_Warunkow_Srodowiska::Usun_Warunki
+   (nazwa_warunkow->value());
+
+lista_warunkow->remove(n);
+
+edycja_warunkow_grp->deactivate();}
+        xywh {103 248 88 26} shortcut 0x75 hide
+      }
+    }
+    Fl_Window okienko_stanow {
+      label {Stany komórek}
+      xywh {86 120 490 270} type Double hide
+    } {
+      Fl_Group {} {open
+        xywh {0 5 480 235} box DOWN_FRAME
+      } {
+        Fl_Browser lista_stanow {
+          label {Lista stanów}
+          callback {int sel = o->value();
+
+if (!sel) {
+   edycja_stanow_grp->deactivate();
+   return;
+}
+
+
+int nr = (int)(o->data(sel));
+numer_stanu->value(nr);
+
+nazwa_stanu->value(Opisy_Stanow[nr].nazwa().c_str());
+kolor_stanu->color(Opisy_Stanow[nr].kolor());
+kolor_stanu->redraw();
+
+
+edycja_stanow_grp->activate();}
+          xywh {6 25 179 210} type Select align 1
+          code0 {int kolumny[] = {40, 0};}
+          code1 {o->column_widths(kolumny);}
+        }
+        Fl_Group edycja_stanow_grp {open
+          xywh {188 10 287 225} box DOWN_BOX deactivate
+        } {
+          Fl_Value_Output numer_stanu {
+            label {Edycja stanu numer:}
+            xywh {373 31 30 27} labelfont 1 textfont 1
+          }
+          Fl_Input nazwa_stanu {
+            label {Nazwa stanu:}
+            callback {int n;
+if ((n = lista_stanow->value())) {
+  n = (int)(lista_stanow->data(n));
+  Opisy_Stanow[n].nazwa(nazwa_stanu->value());
+
+  lista_stanow->text(lista_stanow->value(), nazwa_stanu->value());
+}}
+            xywh {224 100 209 27} align 5
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Button kolor_stanu {
+            label {Kolor:}
+            callback {unsigned char R, G, B;
+
+Fl::get_color(o->color(), R, G, B);
+
+fl_color_chooser("Wybierz kolor:", R, G, B);
+
+o->color(fl_rgb_color(R, G, B));
+
+Opisy_Stanow[int(lista_stanow->data(lista_stanow->value()))].kolor(kolor_stanu->color());}
+            xywh {319 169 63 25} box BORDER_BOX align 4
+            code0 {o->labelfont(PL_Font);}
+          }
+        }
+      }
+      Fl_Button {} {
+        label Dodaj
+        callback {const char *p;
+
+do
+ p = fl_input("Podaj numer stanu:");
+while (p && strspn(p, "-0123456789") != strlen(p));
+
+if (!p || !strlen(p))
+   return;
+
+int nr = atoi(p);
+if (nr >= Opisy_Stanow.size())
+   Opisy_Stanow.resize(nr + 1, Opis_Stanu(std::string(), FL_WHITE));
+
+
+
+Opisy_Stanow[nr].nazwa(p);
+Opisy_Stanow[nr].kolor(FL_WHITE);
+
+lista_stanow->add(p, (void*)nr);}
+        xywh {3 242 81 25}
+      }
+      Fl_Button {} {
+        label Usun
+        callback {int n;
+
+if (! (n= lista_stanow->value()))
+   return;
+lista_stanow->remove(n);
+lista_stanow->redraw();
+
+
+n--;
+
+Opisy_Stanow.erase(Opisy_Stanow.begin() + n);
+
+edycja_stanow_grp->deactivate();}
+        xywh {89 242 81 25}
+      }
+      Fl_Button {} {
+        label OK
+        callback {okienko_stanow->hide();
+
+for (int n = 0; n < okno1->children(); n++)
+   okno1->child(n)->activate();
+
+Uaktualnij_Liste_Wyboru();}
+        xywh {418 242 60 25}
+      }
+    }
+    Fl_Window okienko_rodzajow {
+      label {Rodzaje komórek}
+      xywh {173 656 490 270} type Double hide
+    } {
+      Fl_Group {} {open
+        xywh {3 3 482 236} box DOWN_BOX
+      } {
+        Fl_Group edycja_rodzaju_grp {open
+          xywh {189 6 292 231} box DOWN_BOX deactivate
+        } {
+          Fl_Value_Output numer_rodzaju {
+            label {Edycja rodzaju numer:}
+            xywh {400 21 30 27} labelfont 1 textfont 1
+          }
+          Fl_Input nazwa_rodzaju {
+            label {Nazwa rodzaju:}
+            callback {int n;
+if (o->active() && (n = lista_rodzajow->value())) {
+  n = (int)(lista_rodzajow->data(n));
+
+  Fabryka_Komorek::Zmien_Parametry(n, o->value());
+
+  lista_rodzajow->text(lista_rodzajow->value(), o->value());
+}}
+            xywh {224 70 228 25} align 5
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Button {} {
+            label {...}
+            callback {Fl_File_Chooser fc(KATALOG_WTYCZEK,
+\#ifdef LINUX
+   "Biblioteki dynamiczne (*.so)",
+\#else
+\#ifdef WIN32
+   "Biblioteki dynamiczne (*.dll)",
+\#endif
+\#endif
+   Fl_File_Chooser::SINGLE,
+   "Wybierz wtyczke z funkcja przejscia");
+
+fc.show();
+
+while (fc.visible())
+Fl::wait();
+
+if (fc.count() == 1) {
+   modul_rodzaju->value(fc.value());
+   modul_rodzaju->do_callback();
+}}
+            xywh {429 131 26 26}
+          }
+          Fl_File_Input modul_rodzaju {
+            label {Modul z funkcja przejscia:}
+            callback {int n;
+if (o->active() && (n = lista_rodzajow->value())) {
+  n = (int)(lista_rodzajow->data(n));
+
+  Komorka::funkcja_przejscia f;
+  f = Fabryka_Funkcji::Zaladuj_Funkcje(o->value());
+  if(!f) {
+     fl_message("Je¶li nie przypiszesz poprawnie modu³u, to bêd± problemy.");
+     return;
+  }
+
+  Fabryka_Komorek::Zmien_Parametry(n, o->value(), f);
+}}
+            xywh {225 121 206 36} align 5 when 6
+            code0 {o->labelfont(PL_Font);}
+          }
+          Fl_Button kolor_rodzaju {
+            label {Kolor:}
+            callback {unsigned char R, G, B;
+
+Fl::get_color(o->color(), R, G, B);
+
+fl_color_chooser("Wybierz kolor:", R, G, B);
+
+o->color(fl_rgb_color(R, G, B));
+
+
+int n;
+if (o->active() && (n = lista_rodzajow->value())) {
+  n = (int)(lista_rodzajow->data(n));
+
+  Fabryka_Komorek::Zmien_Parametry(n, o->color());
+}}
+            xywh {329 176 63 25} box BORDER_BOX align 4
+            code0 {o->labelfont(PL_Font);}
+          }
+        }
+        Fl_Browser lista_rodzajow {
+          label {Lista rodzajów}
+          callback {int sel = o->value();
+
+if (!sel) {
+   edycja_rodzaju_grp->deactivate();
+   return;
+}
+
+
+int nr = (int)(o->data(sel));
+numer_rodzaju->value(nr);
+
+const Komorka *k = Fabryka_Komorek::Podaj_Komorke(nr);
+
+nazwa_rodzaju->value(k->nazwa().c_str());
+modul_rodzaju->value(k->modul().c_str());
+kolor_rodzaju->color(k->kolor());
+kolor_rodzaju->redraw();
+
+
+edycja_rodzaju_grp->activate();
+modul_rodzaju->set_visible_focus();}
+          xywh {7 21 182 216} type Select align 1
+        }
+      }
+      Fl_Button {} {
+        label Dodaj
+        callback {const char *p;
+
+while(true){
+ p = fl_input("Podaj numer nowego typu:");
+ if(!p || !strlen(p))
+    return;
+ if (strspn(p, "-0123456789") == strlen(p))
+    break;
+}
+
+
+int nr = atoi(p);
+
+Fabryka_Komorek::Nowy_Rodzaj_Komorki(nr, 0);
+Fabryka_Komorek::Zmien_Parametry(nr, "bez nazwy");
+
+lista_rodzajow->add(p, (void*)nr);
+lista_rodzajow->value(lista_rodzajow->size());
+lista_rodzajow->do_callback();}
+        xywh {6 242 81 25}
+      }
+      Fl_Button {} {
+        label {Usuñ}
+        xywh {89 242 81 25} hide deactivate
+      }
+      Fl_Button {} {
+        label OK
+        callback {if (Fabryka_Komorek::Podaj_Typy().size() == 1) {
+ if (fl_choice("Masz tylko jeden rodzaj komórek.\\n"
+   "Wype³niæ nimi ca³y ekosystem?", "Nie", "Tak", 0) == 1) {
+  Ekosystem *e = Widok1->Podaj_Ekosystem();
+  if (e) {
+    int n = Fabryka_Komorek::Podaj_Typy()[0];
+    e->Wypelnij_Caly(Fabryka_Komorek::Podaj_Komorke(n));
+    Widok1->redraw();
+  }
+ }
+}
+
+okienko_rodzajow->hide();
+Uaktualnij_Liste_Wyboru();}
+        xywh {403 242 81 25}
+      }
+    }
+    Fl_Window about {
+      label {O programie} open
+      xywh {102 255 546 416} type Double hide
+    } {
+      Fl_Box {} {
+        image {/home/rob/FTIMS/PO/PROJEKT/life.png} xywh {25 7 57 64}
+      }
+      Fl_Box {} {
+        label {Game Of Life - Reactivated}
+        xywh {84 21 377 38} labeltype ENGRAVED_LABEL labelsize 30
+      }
+      Fl_Box {} {
+        image {/home/rob/FTIMS/PO/PROJEKT/life.png} xywh {459 7 57 64}
+      }
+      Fl_Box {} {
+        label {Robert Nowotniak <robercik@@stud.ics.p.lodz.pl>
+Micha³ Ostrowski  <mostrow@@stud.ics.p.lodz.pl>}
+        xywh {106 54 311 49}
+        code0 {o->labelfont(PL_Font);}
+      }
+      Fl_Output {} {
+        xywh {16 105 514 268} type Multiline
+        code0 {o->labelfont(PL_Font);}
+        code1 {o->textfont(PL_Font);}
+        code2 {o->value("Niniejszy program jest wolnym oprogramowaniem; mo¿esz go\\n rozprowadzaæ dalej i/lub modyfikowaæ na warunkach Powszechnej\\n Licencji Publicznej GNU, wydanej przez Fundacjê Wolnego\\n Oprogramowania - wed³ug wersji 2 tej Licencji lub (wed³ug twojego\\n wyboru) której¶ z pó¼niejszych wersji.\\n \\n Niniejszy program rozpowszechniany jest z nadziej±, i¿ bêdzie on\\n u¿yteczny - jednak BEZ JAKIEJKOLWIEK GWARANCJI, nawet domy¶lnej\\n gwarancji PRZYDATNO¦CI HANDLOWEJ albo PRZYDATNO¦CI DO OKRE¦LONYCH\\n ZASTOSOWAÑ. W celu uzyskania bli¿szych informacji siêgnij do\\n Powszechnej Licencji Publicznej GNU.\\n \\n Z pewno¶ci± wraz z niniejszym programem otrzyma³e¶ te¿ egzemplarz\\n Powszechnej Licencji Publicznej GNU (GNU General Public License);\\n je¶li nie - napisz do Free Software Foundation, Inc., 59 Temple\\n Place, Suite 330, Boston, MA  02111-1307  USA\\n");}
+      }
+      Fl_Button {} {
+        label ok
+        callback {about->hide();
+okno1->show();}
+        xywh {428 379 101 29}
+        code0 {o->labelfont(PL_Font);}
+      }
+    }
+    code {Uaktualnij_Liste_Wyboru();} {}
+    code {Uaktualnij_Menu_Ukladow();} {}
+    code {\#ifdef WIN32
+okno1->icon((char *)LoadIcon(fl_display, "A"));
+\#endif
+okno1->show();} {}
+  }
+  Function {Uaktualnij_Liste_Wyboru()} {open return_type void
+  } {
+    code {Wektor_String nazwy;
+Wektor_Int typy;
+const Komorka *k;
+
+
+lista_wyboru->clear();
+
+switch (Widok1->Podaj_Maske()) {
+
+case Widok::Srodowisko:
+nazwy = Fabryka_Warunkow_Srodowiska::Podaj_Nazwy();
+
+for (int n = 0; n < nazwy.size(); n++) {
+   lista_wyboru->add(nazwy[n].c_str(), 0, 0,
+      (void*)Fabryka_Warunkow_Srodowiska::Nowe_Warunki(nazwy[n]));
+}
+
+break;
+
+case Widok::Stany:
+
+for (int n = 0; n < Opisy_Stanow.size(); n++) {
+   if (! Opisy_Stanow[n].nazwa().empty())
+      lista_wyboru->add(Opisy_Stanow[n].nazwa().c_str(), 0, 0,
+         (void*)n);
+}
+
+break;
+
+case Widok::Typy_Komorek:
+typy = Fabryka_Komorek::Podaj_Typy();
+
+for (int n = 0; n < typy.size(); n++) {
+   k = Fabryka_Komorek::Podaj_Komorke(typy[n]);
+   lista_wyboru->add(k->nazwa().c_str(), 0, 0,(void*)k);
+}
+
+break;
+
+}
+if (lista_wyboru->size() > 1)
+   lista_wyboru->value(0);
+lista_wyboru->redraw();} {}
+  }
+  Function {Uaktualnij_Menu_Ukladow()} {return_type void
+  } {
+    code {std::list<std::string> pliki;
+
+\#ifdef LINUX
+DIR *Kat;
+struct dirent *ent;
+const char *nazwa;
+
+if(!(Kat = opendir(KATALOG_UKLADOW))) {
+   fl_message("Nie uda³o siê przeszukaæ katalogu \\"%s\\" z gotowymi wzorami", KATALOG_UKLADOW);
+   return;
+}
+
+while ((ent = readdir(Kat))) {
+ nazwa = ent->d_name;
+ if (strlen(nazwa) <= 4)
+      continue;
+ if (strcasecmp(nazwa + strlen(nazwa) - 1 - 3, ".lif"))
+  continue;
+ pliki.push_back(nazwa);
+}
+
+closedir(Kat);
+\#else /* ! LINUX */
+\#ifdef WIN32
+
+WIN32_FIND_DATA ent;
+HANDLE hFind = INVALID_HANDLE_VALUE;
+
+std::string PLIKI = std::string(KATALOG_UKLADOW).append("\\\\*.lif");
+
+hFind = FindFirstFile(PLIKI.c_str(), &ent);
+if (hFind == INVALID_HANDLE_VALUE){
+ fl_message("Nie uda³o siê przeszukaæ katalogu \\"%s\\" z gotowymi wzorami", KATALOG_UKLADOW);
+ return;
+} 
+
+do {
+ if (strlen(ent.cFileName) <= 4)
+      continue;
+ if (strcasecmp(ent.cFileName + strlen(ent.cFileName) - 1 - 3, ".lif"))
+  continue;
+ pliki.push_back(ent.cFileName);
+} while (FindNextFile(hFind, &ent));
+
+FindClose(hFind);
+
+\#endif /* WIN32 */
+\#endif
+
+// XXX tu trzeba dopisac wyczyszczenie submenu
+
+for (std::list<std::string>::iterator i = pliki.begin();
+     i != pliki.end();
+     i++)
+{
+ menu_glowne->
+add((std::string("Uklady komórek/Katalog Ukladów/") + *i).c_str(),
+ 0, (Fl_Callback*)cb_Wczytaj_Uklad_static, (void*)this);
+}} {}
+  }
+  Function {Wybierz_Widok_Warunki()} {open return_type void
+  } {
+    code {// XXX to menuitem_Warunki moze wskazywac w zle miejsce,
+// jesli byly dynamicznie dodawane elementy do podmenu Ukladow..} {}
+    code {menuitem_Warunki->setonly();
+panel_Warunki->setonly();
+
+Widok1->Ustaw_Maske(Widok::Srodowisko);
+
+Uaktualnij_Liste_Wyboru();
+Widok1->redraw();} {}
+  }
+  Function {Wybierz_Widok_Rodzaje()} {open return_type void
+  } {
+    code {menuitem_Rodzaje->setonly();
+panel_Rodzaje->setonly();
+
+Widok1->Ustaw_Maske(Widok::Typy_Komorek);
+
+Uaktualnij_Liste_Wyboru();
+Widok1->redraw();} {}
+  }
+  Function {Wybierz_Widok_Stany()} {open return_type void
+  } {
+    code {menuitem_Stany->setonly();
+panel_Stany->setonly();
+
+Widok1->Ustaw_Maske(Widok::Stany);
+
+Uaktualnij_Liste_Wyboru();
+Widok1->redraw();} {}
+  }
+  Function {cb_Wczytaj_Uklad_static(Fl_Widget *o, void *v)} {return_type {static void}
+  } {
+    code {// funkcja callback musi byc statyczna metoda, wiec nie ma w niej this,
+// zatem trzeba robic to w ten sposob (zgodnie z FLTK FAQ)
+
+Fl_Menu_Bar *menu = (Fl_Menu_Bar*)o;
+const char *wybor = menu->text();
+
+std::string nazwa_pliku = KATALOG_UKLADOW;
+nazwa_pliku.append("/");
+nazwa_pliku.append(wybor);
+
+((UserInterface*)v)->Wczytaj_Uklad(nazwa_pliku.c_str());} {}
+  }
+  Function {Wczytaj_Uklad(const char *nazwa)} {return_type void
+  } {
+    code {if (! nazwa)
+ return;
+
+Ekosystem *e = Widok1->Podaj_Ekosystem();
+if (!e)
+   return;
+
+FILE *f = fopen(nazwa, "r");
+if (f) {
+  e->Wczytaj_LIF(f,
+ e->podaj_tablice()->podaj_szerokosc() / 2,
+ e->podaj_tablice()->podaj_wysokosc() / 2,
+1);
+  fclose(f);
+}
+else
+ fl_alert("Nie uda³o siê wczytaæ z pliku \\"%s\\".", nazwa);
+
+Widok1->redraw();} {}
+  }
+} 
